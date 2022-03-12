@@ -1,6 +1,0 @@
-﻿  CarDetection.cpp
-C:\Users\User\source\repos\CarPlateOCR\CarPlateOCR\CarDetection.cpp(40,17): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\User\source\repos\CarPlateOCR\CarPlateOCR\CarDetection.cpp(41,18): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\User\source\repos\CarPlateOCR\CarPlateOCR\CarDetection.cpp(23,7): warning C4101: 'buffer' :참조되지 않은 지역 변수입니다.
-C:\Users\User\source\repos\CarPlateOCR\CarPlateOCR\CarDetection.cpp(115,50): warning C4244: '=': 'time_t'에서 'double'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  CarPlateOCR.vcxproj -> C:\Users\User\source\repos\CarPlateOCR\x64\Debug\CarPlateOCR.exe
