@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <tchar.h>
 #include "SerialClass.h"	// Library described above
-#include "ImageProcessing.h"
 #include "CarDetection.h"
 #include <string>
 

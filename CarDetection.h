@@ -9,6 +9,6 @@
 using namespace std;
 using namespace cv;
 
-void readVideoStream();
-void carDetectAndDisplay(Mat frame);
-int checkCarPlate(string carNumber);
+void readVideoStream();	// Read video
+void carDetectAndDisplay(Mat frame);	// Detcet car lisence plate and process image
+int checkCarPlate(string carNumber);	// If the lisence plate is in the car list, return index. Else return -1

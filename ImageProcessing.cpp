@@ -149,8 +149,7 @@ void imageProcessing(string input) {
             delta_y = 1;
         }
 
-        gradient = delta_y / delta_x;  //  Get gradient.
-        //cout << gradient << endl;
+        gradient = delta_y / delta_x;  //  Get gradient
 
         if (gradient < 0.25) {
             select = i;
@@ -217,7 +216,7 @@ string printCarNumber(string input) {
     Mat image;
     tesseract::TessBaseAPI* api = new tesseract::TessBaseAPI();
 
-    // Initialize tesseract-ocr with English, without specifying tessdata path
+    // Initialize tesseract-ocr with Korean
     if (api->Init("C:\\Program Files\\tesseract-OCR\\tessdata", "kor3", tesseract::OEM_TESSERACT_ONLY)) {
         fprintf(stderr, "Could not initialize tesseract.\n");
         exit(1);
@@ -235,6 +234,7 @@ string printCarNumber(string input) {
     // Open input image with leptonica library
     Pix* carNumber = pixRead(ch_input);
     api->SetImage(carNumber);
+
     // Get OCR result
     string outText = api->GetUTF8Text();
     string text = UTF8ToANSI(outText.c_str());

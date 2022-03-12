@@ -1,9 +1,8 @@
 #include "CarDetection.h"
-#include "ImageProcessing.h"
-#include "ParkingManagement.h"
-#define parkingSpace 10
-#define retry 3
+#define parkingSpace 10	// Number of parking spaces
+#define retry 3	// If can not recognize car lisence plate, retry 3 times
 
+carInfo* carList[parkingSpace];
 String cars_cascade_name = "haarcascade_russian_plate_number.xml";
 String window_name = "Capture - car detection";
 string carNumber;
@@ -15,7 +14,13 @@ int attempt = 0;
 int index = -1;
 double parkingTime = 0;
 
-carInfo* carList[parkingSpace];
+// For opencv print
+string tempEnterCar;
+time_t tempEnterTime;
+string tempOutCar;
+time_t tempOutTime;
+time_t tempParkingTime;
+
 
 void readVideoStream() {
 	VideoCapture capture;
@@ -70,19 +75,23 @@ void carDetectAndDisplay(Mat frame)
 	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
 	equalizeHist(frame_gray, frame_gray);
 
-	// Detect cars
+	// Detect car license plates
 	cars_cascade.detectMultiScale(frame_gray, cars, 1.1, 3, 0 | CASCADE_SCALE_IMAGE, Size(100, 50),Size(300,100));
+
 
 	if (detectStatus == 0) {
 		if (cars.size() > 0) {
-			detectStatus = 1;
+			detectStatus = 1;	// Change status
 
+			// Capture an image with a car license plate and process the image 
 			imwrite("carImage/temp.jpg", frame);
 			imageProcessing("carImage/temp.jpg");
+
+			// Get car number. If the license plate is not recognized, try three more times
 			carNumber = printCarNumber("carImage/temp.jpg");
 			if (carNumber == "0") {
 				cout << "Can't recognize carPlate\n";
-				if (attempt == retry) {
+				if (attempt == retry) {	// If tried enough, skip it
 					detectStatus = 1;
 					attempt = 0;
 				}
@@ -92,22 +101,25 @@ void carDetectAndDisplay(Mat frame)
 					attempt++;
 				}
 			}
-			else if (carCount > parkingSpace) {
+			else if (carCount == parkingSpace) {	// If parking lot is full
 				cout << "Parking lot is full\n";
 			}
 			else {
 				index = checkCarPlate(carNumber);
 				if (index == -1) {
-					//carList[carCount] = new carInfo(carNumber, time(NULL));
 					int i;
 					for (i = 0; i < parkingSpace; i++) {
-						if (carList[i]->getCarPlate() == "") {
+						if (carList[i]->getCarPlate() == "") {	// Find empty carList space
 							carList[i]->setCarPlate(carNumber);
 							carList[i]->setEnterTime(time(NULL));
 							break;
 						}
 					}
 					cout << carList[i]->getCarPlate() << " enterd at " << carList[i]->getEnterTime() << '\n';
+
+					// For opencv window
+					tempEnterCar = carList[i]->getCarPlate();
+					tempEnterTime = carList[i]->getEnterTime();
 					carCount++;
 				}
 				else {
@@ -116,7 +128,13 @@ void carDetectAndDisplay(Mat frame)
 					if (parkingTime > 5) {
 						cout << carList[index]->getCarPlate() << " out at " << carList[index]->getOutTime() << '\n';
 						cout<<carList[index]->getCarPlate()<<" parking time is "<< carList[index]->getParkingTime() << " sec\n";
-						//delete carList[index];
+
+						// For opencv window
+						tempOutCar = carList[index]->getCarPlate();
+						tempOutTime = carList[index]->getOutTime();
+						tempParkingTime = carList[index]->getParkingTime();
+
+						// Initialization
 						carList[index]->setCarPlate("");
 						carList[index]->setEnterTime(-1);
 						carList[index]->setOutTime(-1);
@@ -138,7 +156,7 @@ void carDetectAndDisplay(Mat frame)
 		}
 	}
 
-	// Rectangle car
+	// Rectangle car lisence plate
 	for (size_t i = 0; i < cars.size(); i++)
 	{
 		Point center(cars[i].x + cars[i].width / 2, cars[i].y + cars[i].height / 2);
@@ -148,12 +166,13 @@ void carDetectAndDisplay(Mat frame)
 
 	// Display parking lot information
 	display = imread("background.jpg");
-	string myText = "testing. . .";
+	string myText = "Parking Lot Information";
 	Point myPoint = Point(10, 40);
 	int myFontFace = 2;
 	double myFontScale = 1.2;
 	putText(display, myText, myPoint, myFontFace, myFontScale, Scalar(0, 0, 0));
 
+	// Print parking time
 	string carNumberText;
 	string informationText;
 	string temp;
@@ -174,10 +193,28 @@ void carDetectAndDisplay(Mat frame)
 			putText(display, informationText, carPoint, myFontFace, myFontScale, Scalar(0, 0, 0));
 		}
 	}
-	imshow("Parking Lot Information", display);
+
+	// Print enter and out car
+	if ((time(NULL) - tempEnterTime) < 5) {
+		myText = tempEnterCar;
+		myPoint = Point(10, 520);
+		myText.append(" is enterd");
+		putText(display, myText, myPoint, myFontFace, myFontScale, Scalar(0, 0, 255));
+	}
+	if ((time(NULL) - tempOutTime) < 5) {
+		myText = tempOutCar;
+		myPoint = Point(10, 560);
+		temp = to_string(tempParkingTime);
+
+		myText.append(" out, parking time : ");
+		myText.append(temp);
+		myText.append(" sec");
+		putText(display, myText, myPoint, myFontFace, myFontScale, Scalar(0, 0, 255));
+	}
 
 	// Show what you got
-	imshow("Capture - Car Detection", frame);
+	imshow("Capture - Car Detection", frame);	
+	imshow("Parking Lot Information", display);
 }
 
 int checkCarPlate(string carNumber) {
