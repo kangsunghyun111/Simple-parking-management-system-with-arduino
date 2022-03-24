@@ -8,6 +8,7 @@ String window_name = "Capture - car detection";
 string carNumber;
 CascadeClassifier cars_cascade;
 char detectStatus = 0;
+bool carDetected = false;
 char temp = '0';
 int carCount = 0;
 int attempt = 0;
@@ -21,11 +22,15 @@ string tempOutCar;
 time_t tempOutTime;
 time_t tempParkingTime;
 
+// For Serial communications with arduino
+int arduinoSerial = 0;
+
 
 void readVideoStream() {
 	VideoCapture capture;
 	Mat frame;
 	char buffer;
+	bool check = false;
 
 	// Load cascade
 	if (!cars_cascade.load(cars_cascade_name)) {
@@ -35,7 +40,7 @@ void readVideoStream() {
 
 	// Read the video stream
 	capture.open("sampleVideo.mp4");
-
+	
 	if (!capture.isOpened()) {
 		printf("--(!)Error opening video capture\n"); 
 		return; 
@@ -50,25 +55,46 @@ void readVideoStream() {
 	for (int i = 0; i < parkingSpace; i++)
 		carList[i] = new carInfo();
 
-	// Video processing
-	while (capture.read(frame))
-	{
-		if (frame.empty())
-		{
-			printf(" --(!) No captured frame -- Break!");
-			break;
-		}
+	// Connect arduino
+	Serial* SP = new Serial("\\\\.\\COM8");    // adjust as needed
+	if (SP->IsConnected())
+		printf("\n\nWe're connected with arduino\n");
 
-		// Apply the classifier to the frame
-		carDetectAndDisplay(frame);
-		int c = waitKey(10);
-		if ((char)c == 27)
-			break;	// escape
+	char incomingData[256] = "";			// don't forget to pre-allocate memory
+	//printf("%s\n",incomingData);
+	int dataLength = 255;
+	int readResult = 0;
+
+	while (SP->IsConnected())
+	{
+		// Video processing
+		while (capture.read(frame))
+		{
+			if (frame.empty())
+			{
+				printf(" --(!) No captured frame -- Break!");
+				break;
+			}
+
+			// Apply the classifier to the frame
+			carDetectAndDisplay(frame,SP);
+
+			int c = waitKey(10);
+			if ((char)c == 27)
+				break;	// escape
+		}	
+
+		delete SP;
+		break;
 	}
+
+
 }
 
-void carDetectAndDisplay(Mat frame)
+void carDetectAndDisplay(Mat frame, Serial* SP)
 {
+	
+	carDetected = false;
 	vector<Rect> cars;
 	Mat frame_gray;
 	Mat display;
@@ -112,6 +138,9 @@ void carDetectAndDisplay(Mat frame)
 						if (carList[i]->getCarPlate() == "") {	// Find empty carList space
 							carList[i]->setCarPlate(carNumber);
 							carList[i]->setEnterTime(time(NULL));
+							carDetected = true;
+							SP->WriteData("1", 1);
+							printf("send 1\n");
 							break;
 						}
 					}
@@ -121,6 +150,9 @@ void carDetectAndDisplay(Mat frame)
 					tempEnterCar = carList[i]->getCarPlate();
 					tempEnterTime = carList[i]->getEnterTime();
 					carCount++;
+					carDetected = true;
+					SP->WriteData("1", 1);
+					printf("send 1\n");
 				}
 				else {
 					carList[index]->setOutTime(time(NULL));
@@ -139,6 +171,7 @@ void carDetectAndDisplay(Mat frame)
 						carList[index]->setEnterTime(-1);
 						carList[index]->setOutTime(-1);
 						carCount--;
+						carDetected = false;
 					}
 				}
 			}
@@ -152,6 +185,8 @@ void carDetectAndDisplay(Mat frame)
 			// Do nothing
 		}
 		else {
+			SP->WriteData("0", 1);
+			printf("send 0\n");
 			detectStatus = 0;
 		}
 	}
