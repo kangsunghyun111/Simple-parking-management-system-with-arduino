@@ -9,6 +9,17 @@ Tesseract-OCR 5.0.1
 Arduino mega 2560
 
 
+
+The entire system can be divided into systems running in visual studios and systems running in Arduino.
+
+The two systems are connected by serial communication. 
+
+When the visual studio recognizes the vehicle entering the parking lot, enter "1" in the Arduino as a serial communication.
+
+If arduino received "1" from visual studio, turn on the guideLEDs for users.
+
+
+
         Visual Studio video
     
 
